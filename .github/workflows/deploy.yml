@@ -27,11 +27,6 @@ jobs:
           mvn clean package
           ls -l target/*.jar
 
-      - name: Configure DNS
-        run: |
-          echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf > /dev/null
-          echo "nameserver 8.8.4.4" | sudo tee -a /etc/resolv.conf > /dev/null
-
       - name: Initialize SSH and Trust Host
         run: |
           mkdir -p ~/.ssh
