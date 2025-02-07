@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    routes:
+      - id: ai-scanner
+        uri: lb://ai-scanner
+        predicates:
+          - Path=/api/v1/ai-scanner/**
+          - Method=GET, POST, DELETE
+        filters:
+          - StripPrefix=3
