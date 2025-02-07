@@ -32,10 +32,17 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p ${{ secrets.SERVER_PORT }} -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Setting up SSH
+      - name: Setting up SSH Agent
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SERVER_KEY }}
+
+      - name: Debug SSH Setup
+        run: |
+          echo "Claves cargadas en el agente:"
+          ssh-add -l
+          echo "Probando conexión SSH (modo verbose)..."
+          ssh -vvv -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "echo 'Conexión SSH exitosa'"
 
       - name: Deploy to VPS
         run: |
@@ -46,28 +53,28 @@ jobs:
           APP_JAR="gateway-0.0.1-SNAPSHOT.jar"
 
           echo "Creando directorio de logs (si no existe)..."
-          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "mkdir -p $LOGS_DIR"
+          ssh -vvv -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "mkdir -p $LOGS_DIR"
 
           echo "Matando proceso anterior (si existe)..."
-          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "\
-          PID=\$(pgrep -f $APP_JAR) && [ -n \"\$PID\" ] && sudo kill -9 \$PID || echo 'No se encontró el proceso para matar' \
+          ssh -vvv -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "\
+            PID=\$(pgrep -f $APP_JAR) && [ -n \"\$PID\" ] && sudo kill -9 \$PID || echo 'No se encontró el proceso para matar' \
           "
 
           echo "Copiando el nuevo JAR..."
-          scp -P ${{ secrets.SERVER_PORT }} target/*.jar ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:$DEPLOY_DIR/
+          scp -v -P ${{ secrets.SERVER_PORT }} target/*.jar ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:$DEPLOY_DIR/
 
           echo "Verificando que el JAR se copió correctamente..."
-          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "ls -l $DEPLOY_DIR"
+          ssh -vvv -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "ls -l $DEPLOY_DIR"
 
           echo "Dando permisos de ejecución al JAR..."
-          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "chmod +x $DEPLOY_DIR/$APP_JAR"
+          ssh -vvv -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "chmod +x $DEPLOY_DIR/$APP_JAR"
 
           echo "Iniciando la aplicación en segundo plano..."
-          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "\
-          nohup java -jar $DEPLOY_DIR/$APP_JAR > $LOGS_DIR/output.log 2>&1 & \
+          ssh -vvv -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "\
+            nohup java -jar $DEPLOY_DIR/$APP_JAR > $LOGS_DIR/output.log 2>&1 & \
           "
 
           echo "Verificando que la aplicación se está ejecutando..."
-          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "pgrep -f $APP_JAR"
+          ssh -vvv -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "pgrep -f $APP_JAR"
 
           echo "Deploy completed"
