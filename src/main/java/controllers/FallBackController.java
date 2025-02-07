@@ -14,4 +14,9 @@ public class FallBackController {
     public ResponseEntity<String> unavailble() {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Your request cant be processed now, try it leater");
     }
+
+    @GetMapping("/notfound")
+    public ResponseEntity<String> notfound() {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("We cant found the requested resource");
+    }
 }
