@@ -13,7 +13,7 @@ spring:
               args:
                 name: ai-scanner
                 statusCodes: 500, 404, 502, 503, 504
-                fallbackUri: forward:
+                fallbackUri: forward:/fallback/unavailble
 resilience4j:
   circuitbreaker:
     configs:
